@@ -1,4 +1,3 @@
-
 %Leo Biancaniello
 
 % Design a Scalar Quantizer for a Gaussian Source 
@@ -15,7 +14,7 @@ pdf = @(x) (1/(sigma*sqrt(2*pi))) * exp(-0.5 * ((x - mu)/sigma).^2); % Gaussian 
 cdf = @(x) 0.5 * (1 + erf((x - mu)/(sigma*sqrt(2)))); % Gaussian CDF
 
 normalPDF = @(x) (1/sqrt(2*pi)) * exp(-0.5*x.^2); % Standard Normal PDF
-
+% Update equations to take pdf instead of normalPDF***
 
 % ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
 % Initialize decision boundaries and reconstruction levels uniformly
@@ -94,6 +93,7 @@ end
 
 % ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
 % Results
+disp('---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------');
 disp([num2str(N) '-level Quantizer for Gaussian Source']);
 disp(' ');
 
