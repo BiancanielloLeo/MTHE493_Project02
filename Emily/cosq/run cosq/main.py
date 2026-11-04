@@ -11,7 +11,7 @@ SET_INDEX = 0
 BLOCK_SIZE = 8
 
 # Load codebooks
-codebook = load_codebook("codebook/cosq_codebook.json")
+codebook = load_codebook("train codebook\codebook\gaussian_laplacian_codebook.json")
 
 image = load_image("images/lena_512_gray.jpg")
 
