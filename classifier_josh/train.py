@@ -1,13 +1,10 @@
 """
 train.py - the classifier and how it learns.
-   make_model() builds f_theta, which turns an image into one "oil" score (a logit z)
+   make_model() creates f_theta, which turns an image into one "oil" score (logit z)
 """
 
 import torch.nn as nn
 from torchvision import models
-
-
-# ---------------- Part 3: model ----------------
 
 def make_model():
     """Pretrained ResNet-18 with its last layer swapped for a single 'oil' score."""
