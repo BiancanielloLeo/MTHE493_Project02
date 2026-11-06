@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def generate_source_signal(distribution, num_samples=500000):
+def generate_source_signal(distribution, num_samples):
     if distribution == "laplace":
         source = np.random.laplace(loc=0, scale=1 / np.sqrt(2), size=num_samples)
 
@@ -71,8 +71,10 @@ def optimize_codebook(source, initial_codebook, tolerance=1e-6, max_iterations=2
         if np.max(np.abs(codebook - old_codebook)) < tolerance:
             break
 
-    # distortion
+    # reassign samples using final codebook
     partition_indices = assign_partitions(source, codebook)
+
+    # distortion
     mse = calculate_distortion(source, codebook, partition_indices)
 
     return codebook, partition_indices, mse
@@ -84,6 +86,6 @@ def train_codebook(source, num_bits, tolerance=1e-6, max_iterations=200):
 
     initial_codebook = generate_initial_codebook(source, num_centroids)
 
-    codebook, partitions, mse = optimize_codebook(source, initial_codebook, tolerance, max_iterations)
+    codebook, partition_indices, mse = optimize_codebook(source, initial_codebook, tolerance, max_iterations)
 
-    return codebook, partitions, mse
+    return codebook, partition_indices, mse

@@ -5,7 +5,7 @@ def load_image(path):
     image = Image.open(path).convert("L")
     return np.array(image, dtype=np.float64)
 
-def divide_into_blocks(image, block_size=8):
+def divide_into_blocks(image, block_size):
     h, w = image.shape
 
     blocks = []
@@ -17,7 +17,7 @@ def divide_into_blocks(image, block_size=8):
 
     return np.array(blocks)
 
-def reconstruct_from_blocks(blocks, image_shape, block_size=8):
+def reconstruct_from_blocks(blocks, image_shape, block_size):
     h, w = image_shape
 
     reconstructed_image = np.zeros((h,w), dtype=np.float64)
@@ -29,12 +29,3 @@ def reconstruct_from_blocks(blocks, image_shape, block_size=8):
             block_index += 1
 
     return reconstructed_image
-
-def normalize_image(image):
-    image_min = np.min(image)
-    image_max = np.max(image)
-
-    if image_max == image_min:
-        return np.zeros_like(image, dtype=np.float64)
-
-    return (image - image_min) / (image_max - image_min)  # Scale to 0-1 range
