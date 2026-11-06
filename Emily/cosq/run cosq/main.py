@@ -1,6 +1,7 @@
 import numpy as np
 import csv
 import os
+from PIL import Image
 
 from image_processing import load_image, divide_into_blocks, reconstruct_from_blocks
 from dct import apply_dct, apply_idct
@@ -75,8 +76,7 @@ def reconstruct_image(bitstream, codebook, set_index, bit_rate, params, num_bloc
     return reconstructed_image
 
 
-def main():
-
+def psnr_results():
     os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
     image = load_image(IMAGE_PATH)
@@ -150,5 +150,84 @@ def main():
         writer.writeheader()
         writer.writerows(results)
 
+
+def image_results(bit_rate, epsilon, delta, set_index):
+    os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+
+    image = load_image("images/baboon_256_colour.jpg")
+
+    blocks = divide_into_blocks(image, BLOCK_SIZE)
+
+    dct_blocks = apply_dct(blocks)
+
+    rng = np.random.default_rng(None)
+
+    sq_codebook = load_codebook("codebooks/SQ_Codebook.json")
+
+    cosq_codebook = load_codebook(f"codebooks/COSQ_Codebook_Delta{delta}.json")
+
+    allocation = get_bit_allocation(bit_rate)
+    bit_allocation = zigzag_order(allocation)
+
+    sq_bitstream, sq_params, num_blocks = compress_image(dct_blocks, sq_codebook, None, bit_rate, "SQ")
+
+    received_sq = transmit_sq_il(sq_bitstream, epsilon, delta, rng)
+
+    reconstructed_sq = reconstruct_image(received_sq,  sq_codebook,  None,  bit_rate, sq_params, num_blocks, image.shape, "SQ")
+
+    sq_psnr = calculate_psnr(image, reconstructed_sq)
+
+    cosq_bitstream, cosq_params, _ = compress_image(dct_blocks, cosq_codebook, set_index, bit_rate, "COSQ")
+
+    # Reconstruct without channel noise
+    reconstructed_cosq_clean = reconstruct_image(cosq_bitstream, cosq_codebook, set_index, bit_rate, cosq_params, num_blocks, image.shape, "COSQ")
+
+    clean_psnr = calculate_psnr(image, reconstructed_cosq_clean)
+
+    received_cosq = transmit_cosq(cosq_bitstream, bit_allocation, epsilon, delta, rng)
+
+    reconstructed_cosq = reconstruct_image(received_cosq, cosq_codebook, set_index, bit_rate, cosq_params, num_blocks, image.shape, "COSQ")
+
+    cosq_psnr = calculate_psnr(image, reconstructed_cosq)
+
+    # ----------------------------------------------
+    # SAVE IMAGES
+    # ----------------------------------------------
+
+    output_path = os.path.join(OUTPUT_FOLDER, f"bitrate_{bit_rate}_epsilon_{epsilon}_delta_{delta}_set_{set_index}")
+
+    os.makedirs(output_path, exist_ok=True)
+
+    def save_image(image_data, filename):
+        image_data = np.clip(image_data, 0, 255).astype(np.uint8)
+
+        Image.fromarray(image_data).save(os.path.join(output_path, filename))
+
+    save_image(image, "original.png")
+    save_image(reconstructed_sq, "decoded_SQ_IL.png")
+    save_image(reconstructed_cosq_clean, "compressed_COSQ.png")
+    save_image(reconstructed_cosq, "decoded_COSQ.png")
+
+    # ----------------------------------------------
+    # PRINT RESULTS
+    # ----------------------------------------------
+
+    print("\nIMAGE RECONSTRUCTION RESULTS")
+    print("-----------------------------------")
+    print(f"Bit rate: {bit_rate}")
+    print(f"Epsilon: {epsilon}")
+    print(f"Delta: {delta}")
+    print(f"COSQ set index: {set_index}")
+
+    print("-----------------------------------")
+    print(f"SQ-IL PSNR: {sq_psnr:.2f} dB")
+    print(f"COSQ (no channel) PSNR: {clean_psnr:.2f} dB")
+    print(f"COSQ PSNR: {cosq_psnr:.2f} dB")
+
+    print("-----------------------------------")
+    print(f"Images saved to: {output_path}")
+
+    return {"SQ_IL": sq_psnr, "COSQ_clean": clean_psnr, "COSQ": cosq_psnr}
+
 if __name__ == "__main__":
-    main()
+    image_results(76, 0.1, 10, 4)
