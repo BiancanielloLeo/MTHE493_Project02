@@ -171,7 +171,7 @@ def train_codebook(source, initial_codebook, P, mapping, tolerance=1e-6, max_ite
     return codebook, partition_indices, mse
 
 
-def simulated_annealing(source, partition_indices, codebook, P, initial_mapping, initial_temperature=0.01, cooling_rate=0.95, minimum_temperature=1e-5, iterations_per_temperature=200):
+def simulated_annealing(source, partition_indices, codebook, P, initial_mapping, initial_temperature=10.0, cooling_rate=0.97, minimum_temperature=0.00025, iterations_per_temperature=200):
 
     rng = np.random.default_rng(None)
 
