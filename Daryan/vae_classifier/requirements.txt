@@ -1,0 +1,6 @@
+# Python >= 3.9. Install PyTorch first if you want a specific CUDA build: https://pytorch.org/get-started/locally/
+torch>=2.0
+numpy>=1.21
+pillow>=9.0
+scikit-learn>=1.0
+matplotlib>=3.5
