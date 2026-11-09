@@ -89,72 +89,72 @@ def psnr_results():
 
     results = []
 
-    rng = np.random.default_rng(None)
+    for trial in range(200):
 
-    for bit_rate in BIT_RATES:
+        rng = np.random.default_rng()
 
-        print(f"\nBIT RATE: {bit_rate}")
+        for bit_rate in BIT_RATES:
 
-        allocation = get_bit_allocation(bit_rate)
-        bit_allocation = zigzag_order(allocation)
+            allocation = get_bit_allocation(bit_rate)
+            bit_allocation = zigzag_order(allocation)
 
-        sq_bitstream, sq_params, num_blocks = compress_image(dct_blocks, sq_codebook, None, bit_rate, "SQ")
+            sq_bitstream, sq_params, num_blocks = compress_image(dct_blocks, sq_codebook, None, bit_rate, "SQ")
 
-        for epsilon in EPSILONS:
-            for delta in DELTAS:
+            for epsilon in EPSILONS:
+                for delta in DELTAS:
 
-                # sq-il
-                received_sq = transmit_sq_il(sq_bitstream, epsilon, delta, rng)
-                reconstructed_sq = reconstruct_image(received_sq, sq_codebook, None, bit_rate, sq_params, num_blocks, image.shape, "SQ")
-                sq_psnr = calculate_psnr(image, reconstructed_sq)
+                    # sq-il
+                    received_sq = transmit_sq_il(sq_bitstream, epsilon, delta, rng)
+                    reconstructed_sq = reconstruct_image(received_sq, sq_codebook, None, bit_rate, sq_params, num_blocks, image.shape, "SQ")
+                    sq_psnr = calculate_psnr(image, reconstructed_sq)
 
-                results.append({"system": "SQ-IL", "bit_rate": bit_rate, "epsilon": epsilon, "delta": delta, "set_index": None, "psnr": sq_psnr})
+                    results.append({"trial": trial + 1, "system": "SQ-IL", "bit_rate": bit_rate, "epsilon": epsilon, "delta": delta, "set_index": None, "psnr": sq_psnr})
 
-                # cosq
-                cosq_codebook = load_codebook(f"codebooks/COSQ_Codebook_Delta{delta}.json")
+                    # cosq
+                    cosq_codebook = load_codebook(f"codebooks/COSQ_Codebook_Delta{delta}.json")
 
-                for set_index in COSQ_SETS[epsilon]:
+                    for set_index in COSQ_SETS[epsilon]:
 
-                    cosq_bitstream, cosq_params, _ = compress_image(dct_blocks, cosq_codebook, set_index, bit_rate, "COSQ")
-                    received_cosq = transmit_cosq(cosq_bitstream, bit_allocation, epsilon, delta, rng)
-                    reconstructed_cosq = reconstruct_image(received_cosq, cosq_codebook, set_index, bit_rate, cosq_params, num_blocks, image.shape, "COSQ")
-                    cosq_psnr = calculate_psnr(image, reconstructed_cosq)
+                        cosq_bitstream, cosq_params, _ = compress_image(dct_blocks, cosq_codebook, set_index, bit_rate, "COSQ")
+                        received_cosq = transmit_cosq(cosq_bitstream, bit_allocation, epsilon, delta, rng)
+                        reconstructed_cosq = reconstruct_image(received_cosq, cosq_codebook, set_index, bit_rate, cosq_params, num_blocks, image.shape, "COSQ")
+                        cosq_psnr = calculate_psnr(image, reconstructed_cosq)
 
-                    results.append({"system": "COSQ", "bit_rate": bit_rate, "epsilon": epsilon, "delta": delta, "set_index": set_index, "psnr": cosq_psnr})
+                        results.append({"trial": trial + 1, "system": "COSQ", "bit_rate": bit_rate, "epsilon": epsilon, "delta": delta, "set_index": set_index, "psnr": cosq_psnr})
 
-    # ----------------------------------------------
-    # SAVE RESULTS
-    # ----------------------------------------------
+    df = pd.DataFrame(results)
+
+    averaged_results = (
+        df.groupby(
+            ["system", "bit_rate", "epsilon", "delta", "set_index"],
+            dropna=False
+        )["psnr"]
+        .agg(["mean", "std"])
+        .reset_index()
+    )
+
+    averaged_results.rename(columns={
+        "mean": "average_psnr",
+        "std": "std_psnr"
+    }, inplace=True)
+    
+    csv_path = os.path.join(
+        OUTPUT_FOLDER,
+        "psnr_results.csv"
+    )
 
     csv_path = os.path.join(
         OUTPUT_FOLDER,
         "psnr_results.csv"
     )
 
-    with open(csv_path, "w", newline="") as file:
-
-        fieldnames = [
-            "system",
-            "bit_rate",
-            "epsilon",
-            "delta",
-            "set_index",
-            "psnr"
-        ]
-
-        writer = csv.DictWriter(
-            file,
-            fieldnames=fieldnames
-        )
-
-        writer.writeheader()
-        writer.writerows(results)
+    averaged_results.to_csv(csv_path, index=False)
 
 
 def image_results(bit_rate, epsilon, delta, set_index):
     os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
-    image = load_image("images/baboon_256_colour.jpg")
+    image = load_image("images/lena_512_gray.jpg")
 
     blocks = divide_into_blocks(image, BLOCK_SIZE)
 
@@ -230,4 +230,4 @@ def image_results(bit_rate, epsilon, delta, set_index):
     return {"SQ_IL": sq_psnr, "COSQ_clean": clean_psnr, "COSQ": cosq_psnr}
 
 if __name__ == "__main__":
-    image_results(76, 0.1, 10, 4)
+    psnr_results()
