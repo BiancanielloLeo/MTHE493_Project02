@@ -1,0 +1,9 @@
+# Training outputs: checkpoints, metrics, plots, audit results
+runs/
+*.pt
+*.pth
+# Python caches
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.DS_Store
