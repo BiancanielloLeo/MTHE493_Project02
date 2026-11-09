@@ -14,7 +14,7 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 
 REPO = Path(__file__).parent.parent                  # MTHE493 folder
-IMAGES = REPO / "images" / "Oil Spills"
+IMAGES = REPO / "images" / "CSIRO"
 SPLIT_FILE = Path(__file__).parent / "split.json"
 
 
@@ -61,7 +61,7 @@ if __name__ == "__main__":
     split = {"train": [], "val": [], "test": []}
 
     # Split each class separately so every group is approximately 1/3 oil.
-    for folder, label in [("Oil", 1), ("No Oil", 0)]:
+    for folder, label in [("oil", 1), ("no oil", 0)]:
         paths = sorted((IMAGES / folder).glob("*.jpg"))
         random.shuffle(paths)
 
